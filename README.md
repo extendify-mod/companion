@@ -2,10 +2,14 @@
 
 Extendify Companion (forked of [VencordCompanion](https://github.com/Vencord/Companion)) is a vscode extension to test patches & webpack finds right from the comfort of your IDE
 
-- Adds "Test Find" on any webpack finds that will test whether your filter finds exactly one module (and not more or none)
-- Adds "Test Patch" on any patches you define in definePlugin() that will test that your find is unique and your match and replace works and compiles correctly
+-   Adds "Test Find" on any webpack finds that will test whether your filter finds exactly one module (and not more or none)
+-   Adds "Test Patch" on any patches you define in definePlugin() that will test that your find is unique and your match and replace works and compiles correctly
 
-To use it you also need to compile Vencord with DEV (aka `pnpm build --watch` or `pnpm buildWeb --watch`) and enable the "DevCompanion" plugin. Then just start Discord
+# Usage
+
+-   Run Extendify in dev mode (`npm run dev`)
+-   Download the [latest release](https://github.com/extendify-mod/companion/releases/latest) (or package yourself `pnpm run package`)
+-   Install the extension `code --install-extension extendify-companion-x.x.x.vsix`
 
 # Showcase
 
