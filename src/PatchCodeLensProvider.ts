@@ -1,10 +1,36 @@
-import { ArrayLiteralExpression, createSourceFile, Expression, IntersectionTypeNode, isArrayLiteralExpression, isCallExpression, isExportAssignment, isIdentifier, isIntersectionTypeNode, isObjectLiteralExpression, isPropertyAssignment, isStringLiteral, isTypeReferenceNode, isVariableDeclaration, isVariableStatement, Node, ObjectLiteralExpression, ScriptTarget, TypeReferenceNode } from "typescript";
+import {
+    ArrayLiteralExpression,
+    createSourceFile,
+    Expression,
+    IntersectionTypeNode,
+    isArrayLiteralExpression,
+    isCallExpression,
+    isExportAssignment,
+    isIdentifier,
+    isIntersectionTypeNode,
+    isObjectLiteralExpression,
+    isPropertyAssignment,
+    isStringLiteral,
+    isTypeReferenceNode,
+    isVariableDeclaration,
+    isVariableStatement,
+    Node,
+    ObjectLiteralExpression,
+    ScriptTarget,
+    TypeReferenceNode,
+} from "typescript";
 import { CodeLens, CodeLensProvider, Range, TextDocument } from "vscode";
-import { hasName, isNotNull, tryParseFunction, tryParseRegularExpressionLiteral, tryParseStringLiteral } from "./helpers";
+import {
+    hasName,
+    isNotNull,
+    tryParseFunction,
+    tryParseRegularExpressionLiteral,
+    tryParseStringLiteral,
+} from "./helpers";
 import { PatchData } from "./shared";
 
 function parseFind(patch: ObjectLiteralExpression) {
-    const find = patch.properties.find(p => hasName(p, "find"));
+    const find = patch.properties.find((p) => hasName(p, "find"));
     if (!find || !isPropertyAssignment(find) || !isStringLiteral(find.initializer)) return null;
 
     return find.initializer.text;
@@ -19,7 +45,7 @@ function parseReplace(document: TextDocument, node: Expression) {
 }
 
 function parseReplacement(document: TextDocument, patch: ObjectLiteralExpression) {
-    const replacementObj = patch.properties.find(p => hasName(p, "replacement"));
+    const replacementObj = patch.properties.find((p) => hasName(p, "replacement"));
 
     if (!replacementObj || !isPropertyAssignment(replacementObj)) return null;
 
@@ -28,23 +54,25 @@ function parseReplacement(document: TextDocument, patch: ObjectLiteralExpression
     const replacements = isArrayLiteralExpression(replacement) ? replacement.elements : [replacement];
     if (!replacements.every(isObjectLiteralExpression)) return null;
 
-    const replacementValues = (replacements as ObjectLiteralExpression[]).map((r: ObjectLiteralExpression) => {
-        const match = r.properties.find(p => hasName(p, "match"));
-        const replace = r.properties.find(p => hasName(p, "replace"));
+    const replacementValues = (replacements as ObjectLiteralExpression[])
+        .map((r: ObjectLiteralExpression) => {
+            const match = r.properties.find((p) => hasName(p, "match"));
+            const replace = r.properties.find((p) => hasName(p, "replace"));
 
-        if (!replace || !isPropertyAssignment(replace) || !match || !isPropertyAssignment(match)) return null;
+            if (!replace || !isPropertyAssignment(replace) || !match || !isPropertyAssignment(match)) return null;
 
-        const matchValue = parseMatch(match.initializer);
-        if (!matchValue) return null;
+            const matchValue = parseMatch(match.initializer);
+            if (!matchValue) return null;
 
-        const replaceValue = parseReplace(document, replace.initializer);
-        if (replaceValue == null) return null;
+            const replaceValue = parseReplace(document, replace.initializer);
+            if (replaceValue == null) return null;
 
-        return {
-            match: matchValue,
-            replace: replaceValue
-        };
-    }).filter(isNotNull);
+            return {
+                match: matchValue,
+                replace: replaceValue,
+            };
+        })
+        .filter(isNotNull);
 
     return replacementValues.length > 0 ? replacementValues : null;
 }
@@ -57,17 +85,19 @@ function parsePatch(document: TextDocument, patch: ObjectLiteralExpression): Pat
 
     return {
         find,
-        replacement
+        replacement,
     };
 }
 
 const enum ParseResult {
     NOT_FOUND,
-    INVALID
+    INVALID,
 }
 
-
-const recursivelyFindType = (node: TypeReferenceNode | IntersectionTypeNode, typeName: string): TypeReferenceNode | undefined => {
+const recursivelyFindType = (
+    node: TypeReferenceNode | IntersectionTypeNode,
+    typeName: string
+): TypeReferenceNode | undefined => {
     if (!isIntersectionTypeNode(node) && isTypeReferenceNode(node)) {
         if (isIdentifier(node.typeName) && node.typeName.text === typeName) return node;
         else return;
@@ -89,15 +119,19 @@ const recursivelyFindType = (node: TypeReferenceNode | IntersectionTypeNode, typ
             if (t) return t;
         }
     }
-}
-
+};
 
 function parsePossiblePatches(node: Node): ArrayLiteralExpression | ParseResult {
     let pluginObj: Expression | undefined = undefined;
 
     if (isVariableStatement(node)) {
         for (const decl of node.declarationList.declarations) {
-            if (isVariableDeclaration(decl) && decl.type && decl.initializer && isObjectLiteralExpression(decl.initializer)) {
+            if (
+                isVariableDeclaration(decl) &&
+                decl.type &&
+                decl.initializer &&
+                isObjectLiteralExpression(decl.initializer)
+            ) {
                 if (isTypeReferenceNode(decl.type) || isIntersectionTypeNode(decl.type)) {
                     const type = recursivelyFindType(decl.type, "PluginDef");
                     if (type) {
@@ -113,14 +147,15 @@ function parsePossiblePatches(node: Node): ArrayLiteralExpression | ParseResult 
         if (!isExportAssignment(node) || !isCallExpression(node.expression)) return ParseResult.NOT_FOUND;
 
         const callExpr = node.expression;
-        if (!isIdentifier(callExpr.expression) || callExpr.expression.text !== "definePlugin") return ParseResult.NOT_FOUND;
+        if (!isIdentifier(callExpr.expression) || callExpr.expression.text !== "definePlugin")
+            return ParseResult.NOT_FOUND;
 
         pluginObj = node.expression.arguments[0];
     }
 
     if (!isObjectLiteralExpression(pluginObj)) return ParseResult.INVALID;
 
-    const patchesObj = pluginObj.properties.find(p => hasName(p, "patches"));
+    const patchesObj = pluginObj.properties.find((p) => hasName(p, "patches"));
     if (!patchesObj) return ParseResult.INVALID;
 
     const patchesArray = isPropertyAssignment(patchesObj) ? patchesObj.initializer : patchesObj;
@@ -153,10 +188,13 @@ export class PatchCodeLensProvider implements CodeLensProvider {
                 const data = parsePatch(document, patch);
                 if (!data) continue;
 
-                const range = new Range(document.positionAt(patch.properties.pos), document.positionAt(patch.properties.end));
+                const range = new Range(
+                    document.positionAt(patch.properties.pos),
+                    document.positionAt(patch.properties.end)
+                );
                 const lens = new CodeLens(range, {
                     title: "Test Patch",
-                    command: "vencord-companion.testPatch",
+                    command: "extendify-companion.testPatch",
                     arguments: [data],
                     tooltip: "Test Patch",
                 });

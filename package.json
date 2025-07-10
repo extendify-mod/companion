@@ -1,22 +1,22 @@
 {
-    "name": "vencord-companion",
-    "displayName": "Vencord Companion",
+    "name": "extendify-companion",
+    "displayName": "Extendify Companion",
     "version": "0.1.3",
-    "description": "Vencord Companion is a vscode extension to test Vencord patches & webpack finds right from the comfort of your IDE",
+    "description": "Extendify Companion is a vscode extension to test patches & webpack finds right from the comfort of your IDE",
     "categories": [
         "Other",
         "Snippets",
         "Testing"
     ],
     "keywords": [
-        "Discord",
-        "Vencord",
+        "Spotify",
+        "Extendify",
         "Modding",
         "Typescript"
     ],
     "repository": {
         "type": "git",
-        "url": "https://github.com/Vencord/Companion"
+        "url": "https://github.com/extendify-mod/companion"
     },
     "license": "GPL-3.0",
     "author": "Vendicated <vendicated+npm@riseup.net>",
@@ -31,42 +31,26 @@
         "watch": "pnpm compile --watch",
         "typecheck": "tsc --noEmit"
     },
-    "contributes": {
-        "snippets": [
-            {
-                "language": "typescript",
-                "path": "./snippets/ts.json"
-            },
-            {
-                "language": "typescriptreact",
-                "path": "./snippets/ts.json"
-            },
-            {
-                "language": "typescriptreact",
-                "path": "./snippets/tsx.json"
-            }
-        ]
-    },
     "activationEvents": [
         "onLanguage:typescript",
         "onLanguage:typescriptreact"
     ],
     "dependencies": {
         "typescript": "^4.9.5",
-        "ws": "^8.12.1"
+        "ws": "^8.18.3"
     },
     "devDependencies": {
-        "@types/node": "16.x",
-        "@types/vscode": "^1.70.0",
-        "@types/ws": "^8.5.4",
-        "@typescript-eslint/eslint-plugin": "^5.53.0",
-        "@typescript-eslint/parser": "^5.53.0",
-        "@vscode/vsce": "^2.18.0",
+        "@types/node": "~16.18.126",
+        "@types/vscode": "^1.96.4",
+        "@types/ws": "^8.18.1",
+        "@typescript-eslint/eslint-plugin": "^5.62.0",
+        "@typescript-eslint/parser": "^5.62.0",
+        "@vscode/vsce": "^3.6.0",
         "esbuild": "^0.17.19",
-        "eslint": "^8.34.0"
+        "eslint": "^8.57.1"
     },
     "engines": {
-        "vscode": "^1.70.0"
+        "vscode": "^1.96.4"
     },
     "icon": "icon.png",
     "galleryBanner": {
@@ -79,5 +63,5 @@
     "sponsor": {
         "url": "https://github.com/sponsors/Vendicated"
     },
-    "homepage": "https://github.com/Vencord/Companion"
+    "homepage": "https://github.com/extendify-mod/companion"
 }

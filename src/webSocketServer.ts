@@ -6,59 +6,65 @@ export let wss: WebSocketServer | undefined;
 export const sockets = new Set<WebSocket>();
 
 const enum CloseCode {
-    POLICY_VIOLATION = 1008
+    POLICY_VIOLATION = 1008,
 }
 
 let nonceCounter = 8485;
 
-export async function sendToSockets(data: { type: string, data: unknown; }) {
+export async function sendToSockets(data: { type: string; data: unknown }) {
     if (sockets.size === 0) {
-        throw new Error("No Discord Clients Connected! Make sure you have Discord open, and have the DevCompanion plugin enabled (see README for more info!)");
+        throw new Error(
+            "No Spotify Clients Connected! Make sure you have Spotify open, and have the DevCompanion plugin enabled."
+        );
     }
 
     const nonce = nonceCounter++;
     (data as any).nonce = nonce;
 
-    const promises = Array.from(sockets, sock => new Promise<void>((resolve, reject) => {
-        const onMessage = (data: RawData) => {
-            const msg = data.toString("utf-8");
-            try {
-                var parsed = JSON.parse(msg);
-            } catch (err) {
-                return reject("Got Invalid Response: " + msg);
-            }
+    const promises = Array.from(
+        sockets,
+        (sock) =>
+            new Promise<void>((resolve, reject) => {
+                const onMessage = (data: RawData) => {
+                    const msg = data.toString("utf-8");
+                    try {
+                        var parsed = JSON.parse(msg);
+                    } catch (err) {
+                        return reject("Got Invalid Response: " + msg);
+                    }
 
-            if (parsed.nonce !== nonce) return;
+                    if (parsed.nonce !== nonce) return;
 
-            cleanup();
+                    cleanup();
 
-            if (parsed.ok) {
-                resolve();
-            } else {
-                reject(parsed.error);
-            }
-        };
+                    if (parsed.ok) {
+                        resolve();
+                    } else {
+                        reject(parsed.error);
+                    }
+                };
 
-        const onError = (err: Error) => {
-            cleanup();
-            reject(err);
-        };
+                const onError = (err: Error) => {
+                    cleanup();
+                    reject(err);
+                };
 
-        const cleanup = () => {
-            sock.off("message", onMessage);
-            sock.off("error", onError);
-        };
+                const cleanup = () => {
+                    sock.off("message", onMessage);
+                    sock.off("error", onError);
+                };
 
-        sock.on("message", onMessage);
-        sock.once("error", onError);
+                sock.on("message", onMessage);
+                sock.once("error", onError);
 
-        setTimeout(() => {
-            cleanup();
-            reject("Timed out");
-        }, 5000);
+                setTimeout(() => {
+                    cleanup();
+                    reject("Timed out");
+                }, 5000);
 
-        sock.send(JSON.stringify(data));
-    }));
+                sock.send(JSON.stringify(data));
+            })
+    );
 
     await Promise.all(promises);
     return true;
@@ -66,22 +72,19 @@ export async function sendToSockets(data: { type: string, data: unknown; }) {
 
 export function startWebSocketServer() {
     wss = new WebSocketServer({
-        port: 8485
+        port: 8485,
     });
 
     wss.on("connection", (sock, req) => {
         if (req.headers.origin) {
             try {
-                switch (new URL(req.headers.origin).hostname) {
-                    case "discord.com":
-                    case "canary.discord.com":
-                    case "ptb.discord.com":
-                        break;
-                    default:
-                        throw "a party";
+                if (new URL(req.headers.origin).hostname !== "xpui.app.spotify.com") {
+                    throw "a party";
                 }
             } catch {
-                outputChannel.appendLine(`[WS] Rejected request from invalid or disallowed origin: ${req.headers.origin}`);
+                outputChannel.appendLine(
+                    `[WS] Rejected request from invalid or disallowed origin: ${req.headers.origin}`
+                );
                 sock.close(CloseCode.POLICY_VIOLATION, "Invalid or disallowed origin");
                 return;
             }
@@ -95,12 +98,12 @@ export function startWebSocketServer() {
             sockets.delete(sock);
         });
 
-        sock.on("message", msg => {
+        sock.on("message", (msg) => {
             outputChannel.appendLine(`[WS] RECV: ${msg}`);
         });
 
-        sock.on("error", err => {
-            console.error("[Vencord Companion WS", err);
+        sock.on("error", (err) => {
+            console.error("[Extendify Companion WS]", err);
             outputChannel.appendLine(`[WS] Error: ${err}`);
         });
 
@@ -114,8 +117,8 @@ export function startWebSocketServer() {
         console.log(sock);
     });
 
-    wss.on("error", err => {
-        console.error("[Vencord Companion WS", err);
+    wss.on("error", (err) => {
+        console.error("[Extendify Companion WS]", err);
         outputChannel.appendLine(`[WS] Error: ${err}`);
     });
 
